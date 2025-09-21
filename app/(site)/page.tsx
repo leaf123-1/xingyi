@@ -31,39 +31,98 @@ const communityImages = [
   "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80",
 ];
 
-async function getHomeData() {
-  const [categories, products, articles] = await Promise.all([
-    prisma.category.findMany({
-      orderBy: { sort: "asc" },
-      take: 4,
-    }),
-    prisma.product.findMany({
-      where: { status: "PUBLISHED" },
-      include: { category: true },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    }),
-    prisma.article.findMany({
-      where: { status: "PUBLISHED" },
-      orderBy: { publishedAt: "desc" },
-      take: 3,
-    }),
-  ]);
+const fallbackHomeData = {
+  categories: [
+    { id: "fallback-cat-1", name: "专业背包", slug: "performance-packs", sort: 1 },
+    { id: "fallback-cat-2", name: "轻量帐篷", slug: "light-tents", sort: 2 },
+    { id: "fallback-cat-3", name: "训练配件", slug: "training-gear", sort: 3 },
+    { id: "fallback-cat-4", name: "保暖层", slug: "insulation", sort: 4 },
+  ],
+  products: [
+    {
+      id: "fallback-prod-1",
+      name: "峰顶系列越野背包",
+      subtitle: "超长距离赛事专用",
+      slug: "summit-ultra-pack",
+      coverImage: "https://images.unsplash.com/photo-1523419409543-0c1df022bdd1?auto=format&fit=crop&w=800&q=80",
+      price: 1599,
+      compareAtPrice: 1899,
+      categoryName: "专业背包",
+    },
+    {
+      id: "fallback-prod-2",
+      name: "疾风越野背包",
+      subtitle: "全场景训练伙伴",
+      slug: "gale-trail-pack",
+      coverImage: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=800&q=80",
+      price: 899,
+      compareAtPrice: null,
+      categoryName: "专业背包",
+    },
+    {
+      id: "fallback-prod-3",
+      name: "星翼碳杆帐篷",
+      subtitle: "四季复合结构",
+      slug: "starlight-carbon-tent",
+      coverImage: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80",
+      price: 3299,
+      compareAtPrice: null,
+      categoryName: "轻量帐篷",
+    },
+  ],
+  articles: [
+    {
+      id: "fallback-article-1",
+      title: "如何规划 100KM 超马补给",
+      slug: "plan-ultra-marathon-nutrition",
+      excerpt: "结合赛段温差与卡点分布，搭建安全补给策略。",
+      content: "",
+      status: "PUBLISHED",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      coverImage: "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
+    },
+  ],
+};
 
-  return {
-    categories,
-    products: products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      subtitle: product.subtitle,
-      slug: product.slug,
-      coverImage: product.coverImage,
-      price: Number(product.price),
-      compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
-      categoryName: product.category?.name ?? null,
-    })),
-    articles,
-  };
+async function getHomeData() {
+  try {
+    const [categories, products, articles] = await Promise.all([
+      prisma.category.findMany({
+        orderBy: { sort: "asc" },
+        take: 4,
+      }),
+      prisma.product.findMany({
+        where: { status: "PUBLISHED" },
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      }),
+      prisma.article.findMany({
+        where: { status: "PUBLISHED" },
+        orderBy: { publishedAt: "desc" },
+        take: 3,
+      }),
+    ]);
+
+    return {
+      categories,
+      products: products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        subtitle: product.subtitle,
+        slug: product.slug,
+        coverImage: product.coverImage,
+        price: Number(product.price),
+        compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+        categoryName: product.category?.name ?? null,
+      })),
+      articles,
+    };
+  } catch (error) {
+    console.warn("prisma 查询失败，使用内置演示数据渲染首页", error);
+    return fallbackHomeData;
+  }
 }
 
 export default async function HomePage() {

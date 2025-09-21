@@ -6,6 +6,7 @@ generator client {
 
 /// 数据源配置（默认 PostgreSQL，开发期可改为 SQLite）
 datasource db {
+  /// 默认使用 PostgreSQL；如需切换其他数据库，请同步更新 provider 并校验字段兼容性
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
